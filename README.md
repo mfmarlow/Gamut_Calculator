@@ -4,6 +4,11 @@ This is a chromacity diagram plotter and area calculator graphical user interfac
 
 It is written in Python by using open source modules. It is not a completed software and it need tons of bug fixes and more compatibilities regarding imported files. Also, some may want to add other standard colour spaces to default options (which is pretty easy thanks to colour-science module). Please feel free to use, share and contribute to the project.
 
+## To use:
+1. Install the required Python dependencies with the command `pip install -r requirements.txt`
+2. Run the command `python main.py`
+
+## Screenshots
 Main window:
 ![Ekran görüntüsü 2022-06-16 121011](https://user-images.githubusercontent.com/90446604/174037231-6444e27b-5a83-40c3-bacc-d36f63444d67.jpg)
 Two gamuts comparatively in CIE 1931 xy:
