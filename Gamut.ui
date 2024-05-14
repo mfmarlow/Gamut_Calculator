@@ -43,7 +43,7 @@
       </rect>
      </property>
      <property name="title">
-      <string>Sample CIE xy Coordinates</string>
+      <string>Sample Coordinates</string>
      </property>
      <property name="checkable">
       <bool>false</bool>
@@ -394,7 +394,7 @@
       </rect>
      </property>
      <property name="title">
-      <string>Reference CIE xy Coordinates</string>
+      <string>Reference Coordinates</string>
      </property>
      <widget class="QTableWidget" name="tW_reference">
       <property name="geometry">
