@@ -1,11 +1,10 @@
-from colour import xy_to_Luv_uv
 import numpy as np
 # print(RGB_COLOURSPACE_NTSC1953.primaries)
 
 def sample_area(colourspace):
-    R = xy_to_Luv_uv(colourspace.primaries[0])
-    G = xy_to_Luv_uv(colourspace.primaries[1])
-    B = xy_to_Luv_uv(colourspace.primaries[2])       
+    R = (colourspace.primaries[0])
+    G = (colourspace.primaries[1])
+    B = (colourspace.primaries[2])       
     R_x1 = R[0]
     R_y1 = R[1]
     G_x2 = G[0]
@@ -19,9 +18,9 @@ def sample_area(colourspace):
 # def sample_points(colourspace):
 #     # Reference:
 #     # https://umitsen.wordpress.com/2013/04/07/nokta-ucgenin-icinde-mi-degil-mi-test-etme/
-#     R = xy_to_Luv_uv(colourspace.primaries[0])
-#     G = xy_to_Luv_uv(colourspace.primaries[1])
-#     B = xy_to_Luv_uv(colourspace.primaries[2])       
+#     R = (colourspace.primaries[0])
+#     G = (colourspace.primaries[1])
+#     B = (colourspace.primaries[2])       
 #     R_x1 = R[0]
 #     R_y1 = R[1]
 #     G_x2 = G[0]
@@ -77,9 +76,9 @@ def sample_area(colourspace):
 # # ******* Standart Renk uzaylarının içindeki noktaları tespit etmek için tek seferlik kullanılan kod
 # # ******* Data "points_database.py" içine kaydedildi.
 # colourspace = RGB_COLOURSPACE_APPLE_RGB
-# R = xy_to_Luv_uv(colourspace.primaries[0])
-# G = xy_to_Luv_uv(colourspace.primaries[1])
-# B = xy_to_Luv_uv(colourspace.primaries[2])
+# R = (colourspace.primaries[0])
+# G = (colourspace.primaries[1])
+# B = (colourspace.primaries[2])
 # R_x1 = R[0]
 # R_y1 = R[1]
 # G_x2 = G[0]

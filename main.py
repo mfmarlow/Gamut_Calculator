@@ -1,6 +1,6 @@
 import sys
 
-from colour import RGB_COLOURSPACES, xy_to_Luv_uv
+from colour import RGB_COLOURSPACES
 from Gamut import Ui_MainWindow
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QTableWidgetItem, QFileDialog
@@ -10,12 +10,15 @@ from PyQt5.QtGui import QIcon
 # from PyQt5.Qt import Qt, QApplication, QClipboard
 
 import numpy as np
-# import matplotlib.pyplot as plt
-from colour.plotting import plot_RGB_colourspaces_in_chromaticity_diagram_CIE1976UCS
+import matplotlib.pyplot as plt
+from colour.plotting import plot_RGB_colourspaces_in_chromaticity_diagram_CIE1976UCS, plot_chromaticity_diagram_CIE1976UCS
+from colour import Luv_uv_to_xy
+from colour.utilities import Structure
 
-# import colour
+import colour
 import sample
 import area
+import user_input
 
 # # RGB Colourspaces keys list: #
 # import colour.models
@@ -30,7 +33,6 @@ class Gamut_win(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         self.sample_RGB = sample.RGB_primaries()
-        self.reference_RGB = sample.RGB_primaries()
         # Radio button initial settings
         self.ui.rB_table_s.setChecked(True)
         self.ui.groupBox_import_sample.setEnabled(False)
@@ -73,13 +75,9 @@ class Gamut_win(QtWidgets.QMainWindow):
     def load_table(self, clrspace):
         table_row = 0
         for item in RGB_COLOURSPACES[clrspace].primaries:
-            item = xy_to_Luv_uv(item)
-            self.ui.tW_reference.setItem(table_row,0,QTableWidgetItem(str(item[0])))
-            self.ui.tW_reference.setItem(table_row,1,QTableWidgetItem(str(item[1])))
+            item = (item)
             table_row +=1
 
-        self.ui.tW_reference.setItem(3,0,QTableWidgetItem(str(xy_to_Luv_uv(RGB_COLOURSPACES[clrspace].whitepoint)[0])))
-        self.ui.tW_reference.setItem(3,1,QTableWidgetItem(str(xy_to_Luv_uv(RGB_COLOURSPACES[clrspace].whitepoint)[1])))
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Control:
@@ -100,183 +98,53 @@ class Gamut_win(QtWidgets.QMainWindow):
                     else:
                         l_tuple = text[0].strip().partition("\t")
                         self.ui.tW_sample.setItem(self.ui.tW_sample.currentRow(),self.ui.tW_sample.currentColumn(),QTableWidgetItem(l_tuple[0].strip()))
-                elif self.ui.tW_reference.hasFocus():  
-                    text = QtWidgets.QApplication.clipboard().text()
-                    text = text.splitlines()
-                    if len(text) > 1:
-                        table_row = 0
-                        for line in text:
-                            l_tuple = line.strip().partition("\t")
-                            self.ui.tW_reference.setItem(table_row,0,QTableWidgetItem(l_tuple[0].strip()))
-                            self.ui.tW_reference.setItem(table_row,1,QTableWidgetItem(l_tuple[2].strip()))
-                            table_row +=1
-                    else:
-                        l_tuple = text[0].strip().partition("\t")
-                        self.ui.tW_reference.setItem(self.ui.tW_reference.currentRow(),self.ui.tW_reference.currentColumn(),QTableWidgetItem(l_tuple[0].strip()))                         
         # Ctrl + C Copy code for table widget
         elif event.key() == Qt.Key_C:
             if self.cntrl:
                 if self.ui.tW_sample.hasFocus():
                     QtWidgets.QApplication.clipboard().setText(f"{self.ui.tW_sample.item(0, 0).text()}\t{self.ui.tW_sample.item(0, 1).text()}\n{self.ui.tW_sample.item(1, 0).text()}\t{self.ui.tW_sample.item(1, 1).text()}\n{self.ui.tW_sample.item(2, 0).text()}\t{self.ui.tW_sample.item(2, 1).text()}\n{self.ui.tW_sample.item(3, 0).text()}\t{self.ui.tW_sample.item(3, 1).text()}")
-                if self.ui.tW_reference.hasFocus():    
-                    QtWidgets.QApplication.clipboard().setText(f"{self.ui.tW_reference.item(0, 0).text()}\t{self.ui.tW_reference.item(0, 1).text()}\n{self.ui.tW_reference.item(1, 0).text()}\t{self.ui.tW_reference.item(1, 1).text()}\n{self.ui.tW_reference.item(2, 0).text()}\t{self.ui.tW_reference.item(2, 1).text()}\n{self.ui.tW_reference.item(3, 0).text()}\t{self.ui.tW_reference.item(3, 1).text()}")
         elif event.key() == Qt.Key_Delete:
             if self.ui.tW_sample.hasFocus():
                 self.ui.tW_sample.setItem(self.ui.tW_sample.currentRow(),self.ui.tW_sample.currentColumn(),QTableWidgetItem(""))
-            if self.ui.tW_reference.hasFocus():
-                self.ui.tW_reference.setItem(self.ui.tW_reference.currentRow(),self.ui.tW_reference.currentColumn(),QTableWidgetItem(""))
 
     def keyReleaseEvent(self, event):
         if event.key() == Qt.Key_Control:
             self.cntrl =False
+
     ##
     # THE METHOD FOR CALCULATIONS BASED ON THE COORDINATES ENTERED INTO TABLE
     ##
     def calculate(self):
-        def calculate_user_xy():
-            if self.ui.rB_file_s.isChecked():
-                # Get sample name name from line edit form or set generic name if empty
-                if self.ui.le_sample_name.text().strip() != "":
-                    WHITEPOINT_NAME_SAMPLE = self.ui.le_sample_name.text()
-                else:
-                    WHITEPOINT_NAME_SAMPLE = "Sample"
-                # Get sample name from line edit form or set generic name if empty
-                self.sample_RGB.file_RGB_primaries(
-                    file_path = self.ui.le_browse_sample.text(),
-                    WHITEPOINT_NAME = WHITEPOINT_NAME_SAMPLE,
-                    filter_path = self.ui.le_browse_sample_filter.text(),
-                    filter_bool = self.ui.groupBox_sample_filter.isChecked(),
-                    is_sample = True,
-                    spectrum_bool = self.ui.pB_spectrum.isChecked()
-                    )
-                self.wp_s_bool = True
-
-                # Load table
-                self.ui.tW_sample.setEnabled(True)
-                table_row = 0
-                for item in self.sample_RGB.RGB_COLOURSPACE_SAMPLE.primaries:
-                    if self.xy:
-                        self.ui.tW_sample.setItem(table_row,0,QTableWidgetItem(str(item[0])))
-                        self.ui.tW_sample.setItem(table_row,1,QTableWidgetItem(str(item[1])))
-                    else:
-                        item = xy_to_Luv_uv(item)
-                        self.ui.tW_sample.setItem(table_row,0,QTableWidgetItem(str(item[0])))
-                        self.ui.tW_sample.setItem(table_row,1,QTableWidgetItem(str(item[1])))
-                    table_row +=1
-                if self.xy:
-                    self.ui.tW_sample.setItem(3,0,QTableWidgetItem(str(self.sample_RGB.RGB_COLOURSPACE_SAMPLE.whitepoint[0])))
-                    self.ui.tW_sample.setItem(3,1,QTableWidgetItem(str(self.sample_RGB.RGB_COLOURSPACE_SAMPLE.whitepoint[1])))
-                else:
-                    self.ui.tW_sample.setItem(3,0,QTableWidgetItem(str(xy_to_Luv_uv(self.sample_RGB.RGB_COLOURSPACE_SAMPLE.whitepoint)[0])))
-                    self.ui.tW_sample.setItem(3,1,QTableWidgetItem(str(xy_to_Luv_uv(self.sample_RGB.RGB_COLOURSPACE_SAMPLE.whitepoint)[1])))                   
-                # Load table
-
-            elif self.ui.rB_table_s.isChecked():
-                # Check table values if empty and between 0 and 0.9
-                table_y =0
-                while table_y <= 1:
-                    table_x =0
-                    while table_x <=2:
-                        if (self.ui.tW_sample.item(table_x, table_y).text().strip() != "") and (float(self.ui.tW_sample.item(table_x, table_y).text()) < 0.9) and (float(self.ui.tW_sample.item(table_x, table_y).text()) > 0):
-                            # print(f"pass ({table_x}, {table_y})")
-                            pass
-                        else:
-                            print(f"Inappropriate table value at ({table_x}, {table_y})")
-                        table_x +=1
-                    table_y +=1
-                # Check table values if empty and between 0 and 0.9
-
-                # if self.xy:
-                # Get primary RGB xy coordinates from table widget cells
-                PRIMARIES_SAMPLE = np.array(
-                    [
-                        [float(self.ui.tW_sample.item(0, 0).text()), float(self.ui.tW_sample.item(0, 1).text())],   #R
-                        [float(self.ui.tW_sample.item(1, 0).text()), float(self.ui.tW_sample.item(1, 1).text())],   #G
-                        [float(self.ui.tW_sample.item(2, 0).text()), float(self.ui.tW_sample.item(2, 1).text())],   #B
-                    ]
-                )
-                # Get primary RGB xy coordinates from table widget cells
-                # else:
-                #     # Get primary RGB uv coordinates from table widget cells
-                #     PRIMARIES_SAMPLE = np.array(
-                #         [
-                #             Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(0, 0).text()), float(self.ui.tW_sample.item(0, 1).text())])),   #R
-                #             Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(1, 0).text()), float(self.ui.tW_sample.item(1, 1).text())])),   #G
-                #             Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(2, 0).text()), float(self.ui.tW_sample.item(2, 1).text())])),   #B
-                #         ]
-                #     )
-                #     # Get primary RGB uv coordinates from table widget cells
-                
-                # Get whitepoint xy coordinates from table widget cells and decide whether to show whitepoint or not        
-                if type(self.ui.tW_sample.item(3,0)) == QTableWidgetItem and type(self.ui.tW_sample.item(3,1)) == QTableWidgetItem:
-                    if self.ui.tW_sample.item(3, 0).text().strip() != "" and self.ui.tW_sample.item(3, 1).text().strip() != "":
-                        if (float(self.ui.tW_sample.item(3, 0).text()) < 0.9) and (float(self.ui.tW_sample.item(3, 0).text()) > 0) and (float(self.ui.tW_sample.item(3, 1).text()) < 0.9) and (float(self.ui.tW_sample.item(3, 1).text()) > 0):
-                            # if self.xy:
-                            CCS_WHITEPOINT_SAMPLE = np.array([float(self.ui.tW_sample.item(3, 0).text()), float(self.ui.tW_sample.item(3, 1).text())])
-                            # else:
-                            #     CCS_WHITEPOINT_SAMPLE = Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(3, 0).text()), float(self.ui.tW_sample.item(3, 1).text())]))
-                            self.wp_s_bool = True
-                    else:
-                        self.wp_s_bool = False
-                        CCS_WHITEPOINT_SAMPLE = np.array([0.3,0.3]) 
-                else:
-                    self.wp_s_bool = False
-                    CCS_WHITEPOINT_SAMPLE = np.array([0.3,0.3])     # Values not important. Whitepoint won't show.
-                # Get whitepoint xy coordinates from table widget cells and decide whether to show whitepoint or not  
-
-                # Get sample name name from line edit form or set generic name if empty
-                if self.ui.le_sample_name.text().strip() != "":
-                    WHITEPOINT_NAME_SAMPLE = self.ui.le_sample_name.text()
-                else:
-                    WHITEPOINT_NAME_SAMPLE = "Sample"
-                # Get sample name name from line edit form or set generic name if empty
-
-                # Initialize an RGB_Colourspace object from colour-science module with the data above
-                self.sample_RGB.user_RGB_primaries(
-                    PRIMARIES = PRIMARIES_SAMPLE,
-                    CCS_WHITEPOINT = CCS_WHITEPOINT_SAMPLE,
-                    WHITEPOINT_NAME = WHITEPOINT_NAME_SAMPLE
-                )
-                # Initialize an RGB_Colourspace object from colour-science module with the data above
-
-                # Reload handwritten table if uv calculation is done
-                if not self.xy:
-                    table_row = 0
-                    for item in self.sample_RGB.RGB_COLOURSPACE_SAMPLE.primaries:
-                        item = xy_to_Luv_uv(item)
-                        self.ui.tW_sample.setItem(table_row,0,QTableWidgetItem(str(item[0])))
-                        self.ui.tW_sample.setItem(table_row,1,QTableWidgetItem(str(item[1])))
-                        table_row +=1
-                    self.ui.tW_sample.setItem(3,0,QTableWidgetItem(str(xy_to_Luv_uv(self.sample_RGB.RGB_COLOURSPACE_SAMPLE.whitepoint)[0])))
-                    self.ui.tW_sample.setItem(3,1,QTableWidgetItem(str(xy_to_Luv_uv(self.sample_RGB.RGB_COLOURSPACE_SAMPLE.whitepoint)[1])))                   
-                # Reload handwritten table if uv calculation is done
-    ##
-    # THE METHOD FOR CALCULATIONS BASED ON THE COORDINATES ENTERED INTO TABLE
-    ##
         
-        calculate_user_xy()
-        
-        item = self.ui.tW_sample.horizontalHeaderItem(0)
-        item.setText("u")
-        item = self.ui.tW_sample.horizontalHeaderItem(1)
-        item.setText("v")
+        user_input.get_colorspace_input(self)
 
-        
-        # If not calculate reference (means one of the standard colourspaces is chosen) and not xy (uv), load table again
-        self.load_table(self.reference_RGBcolourspace)
-
-        if not self.table_cell_error: # If reference table is all appropriate 
+        if not self.table_cell_error:
             # Results text
             self.sample_area = area.sample_area(self.sample_RGB.RGB_COLOURSPACE_SAMPLE)
             self.ui.textBrowser.setText(f"in CIE 1976 (uv) colorspace\nArea: {self.sample_area}")
 
             # Plot colourspace diagrams
-            if self.reference_RGBcolourspace == "NTSC (1953)":
-                self.reference_RGBcolourspace = "NTSC \\(1953\\)"
             self.wp_bool = self.wp_s_bool
-            plot_RGB_colourspaces_in_chromaticity_diagram_CIE1976UCS(self.sample_RGB.RGB_COLOURSPACE_SAMPLE, show_whitepoints = self.wp_bool, standalone = True)
-            if self.reference_RGBcolourspace == "NTSC \\(1953\\)":
-                self.reference_RGBcolourspace = "NTSC (1953)" 
+            
+            plot_RGB_colourspaces_in_chromaticity_diagram_CIE1976UCS(
+                self.sample_RGB.RGB_COLOURSPACE_SAMPLE,
+                show_whitepoints = self.wp_bool,
+                show = True,
+                plot_kwargs= {
+                    "color":"black",
+                    "marker": "o",
+                    "markeredgecolor" : "black",
+                    "markerfacecolor": ('white', 0.0),
+                    "markerfacecoloralt": ('white', 0.0)
+                    },
+                kwargs = {
+                    "title" : None,
+                    "legend" : False,
+                    "transparent_background" : False,
+                    "axes_visible" : True
+                    }
+            )
+
         else:
             print("table cell error")
 

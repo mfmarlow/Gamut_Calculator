@@ -36,7 +36,7 @@ class RGB_primaries:
     #     # self.file_RGB_primaries()
     
     # DOSYADAN OKUYUP KOORDİNAT HESAPLAYAN METHOD ###############
-    def file_RGB_primaries(self, 
+    def set_RGB_primaries_from_file(self, 
         file_path,
         WHITEPOINT_NAME,
         filter_path,
@@ -138,7 +138,7 @@ class RGB_primaries:
                 axs[1].set_ylabel("Intensity (a. u.)")
                 plt.tight_layout()
 
-                plot_single_sd(blu_cf_w_sd, standalone = False)
+                plot_single_sd(blu_cf_w_sd, show = False)
 
             return w_xy, r_xy, g_xy, b_xy
 
@@ -215,7 +215,7 @@ class RGB_primaries:
     # DOSYADAN OKUYUP KOORDİNAT HESAPLAYAN METHOD ###############
 
     # DIŞARIDAN ELLE GİRİLEN DEĞERLERİ ALAN METHOD ################################################
-    def user_RGB_primaries(
+    def set_RGB_primaries_from_table(
         self,
         PRIMARIES,
         CCS_WHITEPOINT,# = np.array([0,0]),
@@ -237,13 +237,13 @@ class RGB_primaries:
         # CCS_WHITEPOINT_SAMPLE = np.array([0.3102, 0.3056])
         # """*SAMPLE* colourspace whitepoint chromaticity coordinates."""
 
-        MATRIX_SAMPLE_TO_XYZ = normalised_primary_matrix(
-            PRIMARIES, CCS_WHITEPOINT
-        )
-        """*SAMPLE* colourspace to *CIE XYZ* tristimulus values matrix."""
+        # MATRIX_SAMPLE_TO_XYZ = normalised_primary_matrix(
+        #     PRIMARIES, CCS_WHITEPOINT
+        # )
+        # """*SAMPLE* colourspace to *CIE XYZ* tristimulus values matrix."""
 
-        MATRIX_XYZ_TO_SAMPLE = np.linalg.inv(MATRIX_SAMPLE_TO_XYZ)
-        """*CIE XYZ* tristimulus values to *SAMPLE* colourspace matrix."""
+        # MATRIX_XYZ_TO_SAMPLE = np.linalg.inv(MATRIX_SAMPLE_TO_XYZ)
+        # """*CIE XYZ* tristimulus values to *SAMPLE* colourspace matrix."""
 
         # Değerlerle RGB_Colourspace sınıfı yeni bir obje oluşturma -------#
         self.RGB_COLOURSPACE_SAMPLE = RGB_Colourspace(
