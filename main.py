@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from colour.plotting import plot_RGB_colourspaces_in_chromaticity_diagram_CIE1976UCS, plot_chromaticity_diagram_CIE1976UCS
 from colour import Luv_uv_to_xy
 from colour.utilities import Structure
+from matplotlib.axes import Axes
 
 import colour
 import sample
@@ -42,6 +43,7 @@ class Gamut_win(QtWidgets.QMainWindow):
         self.ui.rB_file_s.toggled.connect(self.f_file_s)
         self.ui.pb_browse_sample.clicked.connect(self.f_browse_sample)
         self.ui.pb_browse_sample_filter.clicked.connect(self.f_browse_sample_filter)
+        self.ui.pb_file_directory_selector.clicked.connect(self.select_file_directory)
         self.ui.actionAbout.triggered.connect(self.about)
         self.table_cell_error = False
 
@@ -62,6 +64,8 @@ class Gamut_win(QtWidgets.QMainWindow):
         self.ui.le_browse_sample.setText(QFileDialog.getOpenFileName()[0])
     def f_browse_sample_filter(self):
         self.ui.le_browse_sample_filter.setText(QFileDialog.getOpenFileName()[0])
+    def select_file_directory(self):
+        self.ui.le_file_directory.setText(QFileDialog.getExistingDirectory())
       
     def f_table_s(self):
         if self.sender().isChecked():
@@ -126,6 +130,10 @@ class Gamut_win(QtWidgets.QMainWindow):
             # Plot colourspace diagrams
             self.wp_bool = self.wp_s_bool
             
+            figure = plt.figure(figsize=(10, 10))
+            axes = figure.gca()
+            axes.grid(True, which='both', color='gray', linestyle='--', linewidth=0.5)
+
             plot_RGB_colourspaces_in_chromaticity_diagram_CIE1976UCS(
                 self.sample_RGB.RGB_COLOURSPACE_SAMPLE,
                 show_whitepoints = self.wp_bool,
@@ -137,16 +145,25 @@ class Gamut_win(QtWidgets.QMainWindow):
                     "markerfacecolor": ('white', 0.0),
                     "markerfacecoloralt": ('white', 0.0)
                     },
-                kwargs = {
-                    "title" : None,
-                    "legend" : False,
-                    "transparent_background" : False,
-                    "axes_visible" : True
-                    }
+                title = f"{self.sample_RGB.RGB_COLOURSPACE_SAMPLE.name}",
+                legend = False,
+                transparent_background = False,
+                axes = axes
             )
-
+            self.save_to_file()
         else:
             print("table cell error")
+
+    def save_to_file(self):
+        self.save_to_file_path = self.ui.le_file_directory.text()
+        if(self.save_to_file_path != ""):
+            try:
+                plt.savefig(f"{self.save_to_file_path}\\{self.sample_RGB.RGB_COLOURSPACE_SAMPLE.name}_plot.png")
+            except :
+                print(f"unable to save file to path: {self.save_to_file_path}\\{self.sample_RGB.RGB_COLOURSPACE_SAMPLE.name}_plot.png")
+        else:
+            print("Not saving image")
+            # plt.savefig(f"{self.sample_RGB.RGB_COLOURSPACE_SAMPLE.name}_plot.png")
 
 app = QtWidgets.QApplication(sys.argv)
 win = Gamut_win()
