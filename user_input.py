@@ -19,24 +19,24 @@ def fill_table(self):
     self.ui.tW_sample.setItem(3,0,QTableWidgetItem(str((self.sample_RGB.RGB_COLOURSPACE_SAMPLE.whitepoint)[0])))
     self.ui.tW_sample.setItem(3,1,QTableWidgetItem(str((self.sample_RGB.RGB_COLOURSPACE_SAMPLE.whitepoint)[1])))
 
-def table_contains_whitepoint(self):
-    return type(self.ui.tW_sample.item(3,0)) == QTableWidgetItem and type(self.ui.tW_sample.item(3,1)) == QTableWidgetItem
+# def table_contains_whitepoint(self):
+#     return type(self.ui.tW_sample.item(3,0)) == QTableWidgetItem and type(self.ui.tW_sample.item(3,1)) == QTableWidgetItem
 
-def get_whitepoint_from_table(self):
-    if self.ui.tW_sample.item(3, 0).text().strip() != "" and self.ui.tW_sample.item(3, 1).text().strip() != "":
-        if (float(self.ui.tW_sample.item(3, 0).text()) < 0.9) and (float(self.ui.tW_sample.item(3, 0).text()) > 0) and (float(self.ui.tW_sample.item(3, 1).text()) < 0.9) and (float(self.ui.tW_sample.item(3, 1).text()) > 0):
-            CCS_WHITEPOINT_SAMPLE = np.array([float(self.ui.tW_sample.item(3, 0).text()), float(self.ui.tW_sample.item(3, 1).text())])
-            self.wp_s_bool = True
-    else:
-        self.wp_s_bool = False
-        CCS_WHITEPOINT_SAMPLE = np.array([0.3,0.3])
-    return CCS_WHITEPOINT_SAMPLE
+# def get_whitepoint_from_table(self):
+#     if self.ui.tW_sample.item(3, 0).text().strip() != "" and self.ui.tW_sample.item(3, 1).text().strip() != "":
+#         if (float(self.ui.tW_sample.item(3, 0).text()) < 0.9) and (float(self.ui.tW_sample.item(3, 0).text()) > 0) and (float(self.ui.tW_sample.item(3, 1).text()) < 0.9) and (float(self.ui.tW_sample.item(3, 1).text()) > 0):
+#             CCS_WHITEPOINT_SAMPLE = np.array([float(self.ui.tW_sample.item(3, 0).text()), float(self.ui.tW_sample.item(3, 1).text())])
+#             self.wp_s_bool = True
+#     else:
+#         self.wp_s_bool = False
+#         CCS_WHITEPOINT_SAMPLE = np.array([0.3,0.3])
+#     return CCS_WHITEPOINT_SAMPLE
 
 def check_values_within_limits(self):
     table_y =0
     while table_y <= 1:
         table_x =0
-        while table_x <=2:
+        while table_x <=5:
             if (self.ui.tW_sample.item(table_x, table_y).text().strip() != "") and (float(self.ui.tW_sample.item(table_x, table_y).text()) < 0.9) and (float(self.ui.tW_sample.item(table_x, table_y).text()) > 0):
                     # print(f"pass ({table_x}, {table_y})")
                 pass
@@ -72,15 +72,18 @@ def get_colorspace_input(self):
                 Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(0, 0).text()), float(self.ui.tW_sample.item(0, 1).text())])),   #R
                 Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(1, 0).text()), float(self.ui.tW_sample.item(1, 1).text())])),   #G
                 Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(2, 0).text()), float(self.ui.tW_sample.item(2, 1).text())])),   #B
+                Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(3, 0).text()), float(self.ui.tW_sample.item(3, 1).text())])),   #Y
+                Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(4, 0).text()), float(self.ui.tW_sample.item(4, 1).text())])),   #C
+                Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(5, 0).text()), float(self.ui.tW_sample.item(5, 1).text())])),   #M
             ]
         )
         
         # Get whitepoint xy coordinates from table widget cells and decide whether to show whitepoint or not
-        if table_contains_whitepoint(self):
-            CCS_WHITEPOINT_SAMPLE = get_whitepoint_from_table(self) 
-        else:
-            self.wp_s_bool = False
-            CCS_WHITEPOINT_SAMPLE = np.array([0.3,0.3])     # Values not important. Whitepoint won't show.
+        # if table_contains_whitepoint(self):
+        #     CCS_WHITEPOINT_SAMPLE = get_whitepoint_from_table(self) 
+        # else:
+        self.wp_s_bool = False
+        CCS_WHITEPOINT_SAMPLE = np.array([0.3,0.3])     # Values not important. Whitepoint won't show.
 
         # Get sample name name from line edit form or set generic name if empty
         WHITEPOINT_NAME_SAMPLE = get_sample_name(self)
