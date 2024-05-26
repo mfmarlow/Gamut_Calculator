@@ -122,25 +122,7 @@ class Gamut_win(QtWidgets.QMainWindow):
     ##
     def calculate(self):
         
-        # user_input.get_colorspace_input(self)
-
-        # Define a function to convert CIE 1976 UCS to sRGB
-        def ucs_to_rgb(u_prime, v_prime):
-            # Convert CIE 1976 UCS (u', v') to XYZ
-            Y = 1.0  # Assume a constant luminance
-            X = Y * (4 * u_prime) / (3 * v_prime)
-            Z = Y * (2 - 8 * u_prime - 3 * v_prime) / (3 * v_prime)
-            xyz = np.array([X, Y, Z])
-            
-            # Convert XYZ to sRGB
-            rgb = colour.XYZ_to_RGB(
-                xyz,
-                colour.models.RGB_COLOURSPACE_sRGB.whitepoint,
-                colour.models.RGB_COLOURSPACE_sRGB.whitepoint,
-                colour.models.RGB_COLOURSPACE_sRGB.matrix_XYZ_to_RGB
-            )
-            # Clip the RGB values to the range [0, 1]
-            return np.clip(rgb, 0, 1)
+        sample, self.sample_name = user_input.get_colorspace_input(self)
 
         if not self.table_cell_error:
 
@@ -149,18 +131,18 @@ class Gamut_win(QtWidgets.QMainWindow):
             axes = figure.add_subplot()
 
             # Plot the chromaticity diagram
-            colour.plotting.plot_chromaticity_diagram_CIE1976UCS(axes=axes)
-
+            colour.plotting.plot_chromaticity_diagram_CIE1976UCS(axes=axes, transparent_background=False)
+            # colour.plotting.plot_RGB_colourspaces_in_chromaticity_diagram_CIE1976UCS
             # Set the title with a higher position
             axes.set_title('Chromaticity Graph', y=1.05, fontsize=30, fontweight = 'bold')
-            plt.text(0.5, 1.02, 'Subtitle Text', ha='center', va='center', transform=axes.transAxes, fontsize=20)
+            plt.text(0.5, 1.02, self.sample_name, ha='center', va='center', transform=axes.transAxes, fontsize=20)
 
             # Adjust subplot parameters to create more space around the plot
             plt.subplots_adjust(left=0.07, right=0.9, top=0.9, bottom=0.07)
 
             # Set the x and y axis limits
-            axes.set_xlim(0.0, 0.6)
-            axes.set_ylim(0.0, 0.6)
+            axes.set_xlim(-0.05, 0.65)
+            axes.set_ylim(-0.05, 0.65)
 
             # Enable gridlines with a custom z-order
             axes.grid(True)
@@ -172,62 +154,91 @@ class Gamut_win(QtWidgets.QMainWindow):
             axes.get_children()[1].set_clip_on(True)
 
             axes.set_axisbelow(True)
-            
-            # # Define the points in CIE 1976 UCS coordinates
-            # points = np.array([[0.17, 0.20, 0],
-            #                 [0.25, 0.60, 0],
-            #                 [0.40, 0.35, 0]])
 
-            # # Ensure points array is three-dimensional
-            # # points = np.expand_dims(points, axis=1)
-            # # Convert UCS coordinates to uv coordinates
-            # uv_points = colour.models.UCS_to_uv(points)
+            EPSILON: float = colour.hints.cast(float, np.finfo(np.float_).eps)
 
-            # # Plot each point with its corresponding color
-            # if colour.utilities.is_iterable(uv_points[0]):
-            #     for point, uv in zip(points, uv_points):
-            #         plt.plot(uv[0], uv[1], 'o', markersize=10, markerfacecolor=tuple(point), markeredgecolor='black', markeredgewidth=1)
-            # else:
-            #     plt.plot(uv_points[0], uv_points[1], 'o', markersize=10, markerfacecolor=tuple(points), markeredgecolor='black', markeredgewidth=1)
+            P = np.where(
+                sample == 0,
+                EPSILON,
+                sample,
+            )
 
+            def uv_to_xyz(u, v):
+                # Convert from CIE 1976 u'v' to CIE 1931 XYZ
+                if v == 0:
+                    return 0, 0, 0
+                Y = 1
+                X = (9 * u) / (4 * v)
+                Z = (12 - 3 * u - 20 * v) / (4 * v)
+                return X, Y, Z
 
-            num_points = 20
+            def xyz_to_rgb(X, Y, Z):
+                # Convert from CIE 1931 XYZ to linear sRGB
+                matrix = np.array([
+                    [ 3.2406, -1.5372, -0.4986],
+                    [-0.9689,  1.8758,  0.0415],
+                    [ 0.0557, -0.2040,  1.0570]
+                ])
+                rgb = np.dot(matrix, np.array([X, Y, Z]))
+                return rgb
 
-            for i in range(num_points):
-                for j in range(num_points):
-                    u_prime = i/(num_points-1)
-                    v_prime = j/(num_points-1)
-                    if u_prime == 0 or v_prime == 0:
-                        continue
-
-                    # Get the color for the point
-                    # color = ucs_to_rgb(u_prime, v_prime)
-                    xy = colour.models.Luv_uv_to_xy([u_prime, v_prime])
-                    xyz = colour.models.xy_to_XYZ(xy)
-                    rgb = colour.models.XYZ_to_RGB(xyz, colourspace='sRGB')
-
-                    # Add the point to the plot with the correct color
-                    # axes.scatter(u_prime, v_prime, color=('white', 0.0), edgecolor='black', s=250, linewidths=2.5 , zorder=3)
-                    if rgb[0] < 0 or rgb[1] < 0 or rgb[2] < 0:
-                        #nothing
-                        a = 20
+            def gamma_correction(rgb):
+                # Apply gamma correction to linear RGB values to get sRGB values
+                def correct(c):
+                    if c <= 0.0031308:
+                        return 12.92 * c
                     else:
+                        return 1.055 * (c ** (1 / 2.4)) - 0.055
+
+                return np.array([correct(c) for c in rgb])
+
+            def clip_rgb(rgb):
+                # Clip the RGB values to be in the range [0, 1]
+                return np.clip(rgb, 0, 1)
+
+            def uv_to_rgb(u, v):
+                X, Y, Z = uv_to_xyz(u, v)
+                rgb = xyz_to_rgb(X, Y, Z)
+                rgb = gamma_correction(rgb)
+                rgb = clip_rgb(rgb)
+                return rgb
+            
+            colour.models.XYZ_to_sRGB
+            P = colour.models.xy_to_Luv_uv(P)
+
+            P_p = np.vstack([P, P[0]])
+            axes.plot(P_p[..., 0], P_p[..., 1], color = 'black', linewidth = 4, zorder=3)
+
+            for u, v in P_p:
+                rgb = uv_to_rgb(u, v)
+                axes.scatter(u, v, color = rgb, edgecolor='black', s=250, linewidths=2.5, zorder=4)
+
+            def generate_color_dots(axes: Axes):
+                num_points = 20
+                for i in range(num_points):
+                    for j in range(num_points):
+                        u_prime = i/(num_points-1)
+                        v_prime = j/(num_points-1)
+                        if u_prime == 0 or v_prime == 0:
+                            continue
+
+                        rgb = uv_to_rgb(u_prime, v_prime)
+
                         axes.scatter(u_prime, v_prime, color=rgb, edgecolor='black', s=250, linewidths=2.5 , zorder=3)
 
+            # generate_color_dots(axes= axes)
             plt.show()
-            # self.save_to_file()
+            self.save_to_file()
         else:
             print("table cell error")
-
-    
 
     def save_to_file(self):
         self.save_to_file_path = self.ui.le_file_directory.text()
         if(self.save_to_file_path != ""):
             try:
-                plt.savefig(f"{self.save_to_file_path}\\{self.sample_RGB.RGB_COLOURSPACE_SAMPLE.name}_plot.png")
+                plt.savefig(f"{self.save_to_file_path}\\{self.sample_name}_plot.png")
             except :
-                print(f"unable to save file to path: {self.save_to_file_path}\\{self.sample_RGB.RGB_COLOURSPACE_SAMPLE.name}_plot.png")
+                print(f"unable to save file to path: {self.save_to_file_path}\\{self.sample_name}_plot.png")
         else:
             print("Not saving image")
             # plt.savefig(f"{self.sample_RGB.RGB_COLOURSPACE_SAMPLE.name}_plot.png")

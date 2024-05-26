@@ -48,11 +48,11 @@ def check_values_within_limits(self):
 def get_colorspace_input(self):
     if self.ui.rB_file_s.isChecked():
         # Get sample name name from line edit form or set generic name if empty
-        WHITEPOINT_NAME_SAMPLE = get_sample_name(self)
+        SAMPLE_NAME = get_sample_name(self)
 
         self.sample_RGB.set_RGB_primaries_from_file(
             file_path = self.ui.le_browse_sample.text(),
-            WHITEPOINT_NAME = WHITEPOINT_NAME_SAMPLE,
+            WHITEPOINT_NAME = SAMPLE_NAME,
             filter_path = self.ui.le_browse_sample_filter.text(),
             filter_bool = self.ui.groupBox_sample_filter.isChecked(),
             is_sample = True,
@@ -83,14 +83,16 @@ def get_colorspace_input(self):
         #     CCS_WHITEPOINT_SAMPLE = get_whitepoint_from_table(self) 
         # else:
         self.wp_s_bool = False
-        CCS_WHITEPOINT_SAMPLE = np.array([0.3,0.3])     # Values not important. Whitepoint won't show.
+        # CCS_WHITEPOINT_SAMPLE = np.array([0.3,0.3])     # Values not important. Whitepoint won't show.
 
         # Get sample name name from line edit form or set generic name if empty
-        WHITEPOINT_NAME_SAMPLE = get_sample_name(self)
+        SAMPLE_NAME = get_sample_name(self)
 
         # Initialize an RGB_Colourspace object from colour-science module with the data above
-        self.sample_RGB.set_RGB_primaries_from_table(
-            PRIMARIES = PRIMARIES_SAMPLE,
-            CCS_WHITEPOINT = CCS_WHITEPOINT_SAMPLE,
-            WHITEPOINT_NAME = WHITEPOINT_NAME_SAMPLE
-        )
+        # self.sample_RGB.set_RGB_primaries_from_table(
+        #     PRIMARIES = PRIMARIES_SAMPLE,
+        #     CCS_WHITEPOINT = CCS_WHITEPOINT_SAMPLE,
+        #     WHITEPOINT_NAME = WHITEPOINT_NAME_SAMPLE
+        # )
+
+        return PRIMARIES_SAMPLE, SAMPLE_NAME
