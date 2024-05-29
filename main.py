@@ -134,7 +134,7 @@ class Gamut_win(QtWidgets.QMainWindow):
             colour.plotting.plot_chromaticity_diagram_CIE1976UCS(axes=axes, transparent_background=False)
             # colour.plotting.plot_RGB_colourspaces_in_chromaticity_diagram_CIE1976UCS
             # Set the title with a higher position
-            axes.set_title('Chromaticity Graph', y=1.05, fontsize=30, fontweight = 'bold')
+            axes.set_title('Chromaticity Diagram', y=1.05, fontsize=30, fontweight = 'bold')
             plt.text(0.5, 1.02, self.sample_name, ha='center', va='center', transform=axes.transAxes, fontsize=20)
 
             # Adjust subplot parameters to create more space around the plot
@@ -157,76 +157,40 @@ class Gamut_win(QtWidgets.QMainWindow):
 
             EPSILON: float = colour.hints.cast(float, np.finfo(np.float_).eps)
 
-            P = np.where(
+            points = np.where(
                 sample == 0,
                 EPSILON,
                 sample,
             )
 
-            def uv_to_xyz(u, v):
-                # Convert from CIE 1976 u'v' to CIE 1931 XYZ
-                if v == 0:
-                    return 0, 0, 0
-                Y = 1
-                X = (9 * u) / (4 * v)
-                Z = (12 - 3 * u - 20 * v) / (4 * v)
-                return X, Y, Z
+            xys = colour.models.Luv_uv_to_xy(points)
+            xyzs = colour.models.xy_to_XYZ(xys)
+            raw_rgbs = colour.models.XYZ_to_sRGB(xyzs)
+            rgbs = np.clip(raw_rgbs, 0.0, 1.0) #TODO is clipping the right strategy?
 
-            def xyz_to_rgb(X, Y, Z):
-                # Convert from CIE 1931 XYZ to linear sRGB
-                matrix = np.array([
-                    [ 3.2406, -1.5372, -0.4986],
-                    [-0.9689,  1.8758,  0.0415],
-                    [ 0.0557, -0.2040,  1.0570]
-                ])
-                rgb = np.dot(matrix, np.array([X, Y, Z]))
-                return rgb
+            points_plus_first = np.vstack([points, points[0]])
+            axes.plot(points_plus_first[..., 0], points_plus_first[..., 1], color = 'black', linewidth = 4, zorder=3)
 
-            def gamma_correction(rgb):
-                # Apply gamma correction to linear RGB values to get sRGB values
-                def correct(c):
-                    if c <= 0.0031308:
-                        return 12.92 * c
-                    else:
-                        return 1.055 * (c ** (1 / 2.4)) - 0.055
-
-                return np.array([correct(c) for c in rgb])
-
-            def clip_rgb(rgb):
-                # Clip the RGB values to be in the range [0, 1]
-                return np.clip(rgb, 0, 1)
-
-            def uv_to_rgb(u, v):
-                X, Y, Z = uv_to_xyz(u, v)
-                rgb = xyz_to_rgb(X, Y, Z)
-                rgb = gamma_correction(rgb)
-                rgb = clip_rgb(rgb)
-                return rgb
-            
-            colour.models.XYZ_to_sRGB
-            P = colour.models.xy_to_Luv_uv(P)
-
-            P_p = np.vstack([P, P[0]])
-            axes.plot(P_p[..., 0], P_p[..., 1], color = 'black', linewidth = 4, zorder=3)
-
-            for u, v in P_p:
-                rgb = uv_to_rgb(u, v)
-                axes.scatter(u, v, color = rgb, edgecolor='black', s=250, linewidths=2.5, zorder=4)
+            axes.scatter(points[...,0], points[..., 1], c = rgbs, edgecolor='black', s=250, linewidths=2.5, zorder=4)
 
             def generate_color_dots(axes: Axes):
-                num_points = 20
+                xs = []
+                ys = []
+                num_points = 40
                 for i in range(num_points):
                     for j in range(num_points):
-                        u_prime = i/(num_points-1)
-                        v_prime = j/(num_points-1)
-                        if u_prime == 0 or v_prime == 0:
-                            continue
+                        xs = np.append(xs, i/(num_points-1))
+                        ys = np.append(ys, j/(num_points-1))
+                more_points = np.vstack([xs, ys])
+                more_points = np.transpose(more_points)
 
-                        rgb = uv_to_rgb(u_prime, v_prime)
+                xys = colour.models.Luv_uv_to_xy(more_points)
+                xyzss = colour.models.xy_to_XYZ(xys)
+                rgbss = np.clip(colour.models.XYZ_to_sRGB(xyzss), 0.0, 1.0)
 
-                        axes.scatter(u_prime, v_prime, color=rgb, edgecolor='black', s=250, linewidths=2.5 , zorder=3)
+                axes.scatter(more_points[...,0], more_points[...,1], c= rgbss, edgecolor='black', s=50, linewidths=2.5 , zorder=3)
 
-            # generate_color_dots(axes= axes)
+            generate_color_dots(axes= axes)
             plt.show()
             self.save_to_file()
         else:

@@ -66,15 +66,15 @@ def get_colorspace_input(self):
         # Check table values if empty and between 0 and 0.9
         check_values_within_limits(self)
 
-        # Get primary RGB xy coordinates from table widget cells
+        # Get primary RGB uv coordinates from table widget cells
         PRIMARIES_SAMPLE = np.array(
             [
-                Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(0, 0).text()), float(self.ui.tW_sample.item(0, 1).text())])),   #R
-                Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(1, 0).text()), float(self.ui.tW_sample.item(1, 1).text())])),   #G
-                Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(2, 0).text()), float(self.ui.tW_sample.item(2, 1).text())])),   #B
-                Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(3, 0).text()), float(self.ui.tW_sample.item(3, 1).text())])),   #Y
-                Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(4, 0).text()), float(self.ui.tW_sample.item(4, 1).text())])),   #C
-                Luv_uv_to_xy(np.array([float(self.ui.tW_sample.item(5, 0).text()), float(self.ui.tW_sample.item(5, 1).text())])),   #M
+                np.array([float(self.ui.tW_sample.item(0, 0).text()), float(self.ui.tW_sample.item(0, 1).text())]),   #R
+                np.array([float(self.ui.tW_sample.item(1, 0).text()), float(self.ui.tW_sample.item(1, 1).text())]),   #G
+                np.array([float(self.ui.tW_sample.item(2, 0).text()), float(self.ui.tW_sample.item(2, 1).text())]),   #B
+                np.array([float(self.ui.tW_sample.item(3, 0).text()), float(self.ui.tW_sample.item(3, 1).text())]),   #Y
+                np.array([float(self.ui.tW_sample.item(4, 0).text()), float(self.ui.tW_sample.item(4, 1).text())]),   #C
+                np.array([float(self.ui.tW_sample.item(5, 0).text()), float(self.ui.tW_sample.item(5, 1).text())]),   #M
             ]
         )
         
