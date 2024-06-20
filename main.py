@@ -47,8 +47,7 @@ class Gamut_win(QtWidgets.QMainWindow):
         self.ui.rB_table_s.toggled.connect(self.f_table_s)
         self.ui.rB_file_s.toggled.connect(self.f_file_s)
         self.ui.pb_browse_sample.clicked.connect(self.f_browse_sample)
-        self.ui.pb_browse_sample_filter.clicked.connect(
-            self.f_browse_sample_filter)
+
         self.ui.pb_file_directory_selector.clicked.connect(
             self.select_file_directory)
         self.ui.actionAbout.triggered.connect(self.about)
@@ -134,105 +133,112 @@ class Gamut_win(QtWidgets.QMainWindow):
     ##
     def calculate(self):
 
-        sample, self.sample_name = user_input.get_colorspace_input(self)
+        samples = user_input.get_colorspace_input(self)
+        print(samples)
 
-        if not self.table_cell_error:
+        for sample in samples:
+            sample_name = sample[0]
+            sample_r = np.array([float(sample[1]), float(sample[2])])
+            sample_g = np.array([float(sample[3]), float(sample[4])])
+            sample_b = np.array([float(sample[5]), float(sample[6])])
+            sample = np.array([sample_r, sample_g, sample_b])
+            if not self.table_cell_error:
 
-            # Create the background image
-            figure = plt.figure(figsize=(10, 11))
-            background_axes = figure.add_axes([0.03, -0.025, 0.962, 0.962])
-            image = mpimg.imread("1080px-CIE_1976_UCS.png")
-            background_axes.imshow(image)
-            background_axes.axis('off')
-            # colour.plotting.plot_chromaticity_diagram_CIE1976UCS(axes=axes, transparent_background=False)
+                # Create the background image
+                figure = plt.figure(figsize=(10, 11))
+                background_axes = figure.add_axes([0.03, -0.025, 0.962, 0.962])
+                image = mpimg.imread("1080px-CIE_1976_UCS.png")
+                background_axes.imshow(image)
+                background_axes.axis('off')
+                # colour.plotting.plot_chromaticity_diagram_CIE1976UCS(axes=axes, transparent_background=False)
 
-            # Add axes for plotting the user input points
-            axes = figure.add_axes(
-                [0.0062, -0.0028, 1.01, 0.92], frame_on=False)
-            axes.axis("off")
+                # Add axes for plotting the user input points
+                axes = figure.add_axes(
+                    [0.0062, -0.0028, 1.01, 0.92], frame_on=False)
+                axes.axis("off")
 
-            # Set title and subtitle
-            axes.set_title('Chromaticity Diagram', y=1.021,
-                           fontsize=42, fontweight='bold')
-            plt.text(0.5, 0.982, self.sample_name, ha='center',
-                     va='center', transform=axes.transAxes, fontsize=30)
+                # Set title and subtitle
+                axes.set_title('Chromaticity Diagram', y=1.021,
+                            fontsize=42, fontweight='bold')
+                plt.text(0.5, 0.982, sample_name, ha='center',
+                        va='center', transform=axes.transAxes, fontsize=30)
 
-            # Adjust subplot parameters to create more space around the plot
-            plt.subplots_adjust(left=0.07, right=0.9, top=0.9, bottom=0.07)
+                # Adjust subplot parameters to create more space around the plot
+                plt.subplots_adjust(left=0.07, right=0.9, top=0.9, bottom=0.07)
 
-            # Set the x and y axis limits
-            axes.set_xlim(-0.05, 0.65)
-            axes.set_ylim(-0.05, 0.65)
+                # Set the x and y axis limits
+                axes.set_xlim(-0.05, 0.65)
+                axes.set_ylim(-0.05, 0.65)
 
-            # Set a higher z-order for the chromaticity diagram elements
-            for artist in axes.get_children():
-                artist.set_zorder(2)
-                artist.set_clip_on(False)
-            axes.get_children()[1].set_clip_on(True)
+                # Set a higher z-order for the chromaticity diagram elements
+                for artist in axes.get_children():
+                    artist.set_zorder(2)
+                    artist.set_clip_on(False)
+                axes.get_children()[1].set_clip_on(True)
 
-            # Replace 0s with really small numbers instead to avoid division by 0
-            EPSILON: float = colour.hints.cast(float, np.finfo(np.float_).eps)
+                # Replace 0s with really small numbers instead to avoid division by 0
+                EPSILON: float = colour.hints.cast(float, np.finfo(np.float_).eps)
 
-            points = np.where(
-                sample == 0,
-                EPSILON,
-                sample,
-            )
+                points = np.where(
+                    sample == 0,
+                    EPSILON,
+                    sample,
+                )
 
-            # xys = colour.models.Luv_uv_to_xy(points)
-            # xyzs = colour.models.xy_to_XYZ(xys)
-            # raw_rgbs = colour.models.XYZ_to_sRGB(xyzs)
-            # rgbs = np.clip(raw_rgbs, 0.0, 1.0) #TODO is clipping the right strategy?
+                # xys = colour.models.Luv_uv_to_xy(points)
+                # xyzs = colour.models.xy_to_XYZ(xys)
+                # raw_rgbs = colour.models.XYZ_to_sRGB(xyzs)
+                # rgbs = np.clip(raw_rgbs, 0.0, 1.0) #TODO is clipping the right strategy?
 
-            points_plus_first = np.vstack([points, points[0]])
-            axes.plot(points_plus_first[..., 0], points_plus_first[...,
-                      1], color='black', linewidth=4, zorder=3)
+                points_plus_first = np.vstack([points, points[0]])
+                axes.plot(points_plus_first[..., 0], points_plus_first[...,
+                        1], color='black', linewidth=4, zorder=3)
 
-            axes.scatter(points[..., 0], points[..., 1], c='black',
-                         edgecolor='black', s=250, linewidths=2.5, zorder=4)
+                axes.scatter(points[..., 0], points[..., 1], c='black',
+                            edgecolor='black', s=250, linewidths=2.5, zorder=4)
 
-            # def generate_color_dots(axes: Axes):
-            #     xs = []
-            #     ys = []
-            #     num_points = 40
-            #     for i in range(num_points):
-            #         for j in range(num_points):
-            #             xs = np.append(xs, i/(num_points-1))
-            #             ys = np.append(ys, j/(num_points-1))
-            #     more_points = np.vstack([xs, ys])
-            #     more_points = np.transpose(more_points)
+                # def generate_color_dots(axes: Axes):
+                #     xs = []
+                #     ys = []
+                #     num_points = 40
+                #     for i in range(num_points):
+                #         for j in range(num_points):
+                #             xs = np.append(xs, i/(num_points-1))
+                #             ys = np.append(ys, j/(num_points-1))
+                #     more_points = np.vstack([xs, ys])
+                #     more_points = np.transpose(more_points)
 
-            #     xys = colour.models.Luv_uv_to_xy(more_points)
-            #     xyzss = colour.models.xy_to_XYZ(xys)
-            #     rgbss = np.clip(colour.models.XYZ_to_sRGB(xyzss), 0.0, 1.0)
+                #     xys = colour.models.Luv_uv_to_xy(more_points)
+                #     xyzss = colour.models.xy_to_XYZ(xys)
+                #     rgbss = np.clip(colour.models.XYZ_to_sRGB(xyzss), 0.0, 1.0)
 
-            #     axes.scatter(more_points[...,0], more_points[...,1], c= rgbss, edgecolor='black', s=50, linewidths=2.5 , zorder=3)
+                #     axes.scatter(more_points[...,0], more_points[...,1], c= rgbss, edgecolor='black', s=50, linewidths=2.5 , zorder=3)
 
-            # generate_color_dots(axes= axes)
+                # generate_color_dots(axes= axes)
 
-            def triangle_area(vertices):
-                # Unpack the vertices
-                x1, y1 = vertices[0]
-                x2, y2 = vertices[1]
-                x3, y3 = vertices[2]
+                def triangle_area(vertices):
+                    # Unpack the vertices
+                    x1, y1 = vertices[0]
+                    x2, y2 = vertices[1]
+                    x3, y3 = vertices[2]
 
-                # Calculate the area using the determinant formula
-                area = 0.5 * abs(x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2))
-                return area
+                    # Calculate the area using the determinant formula
+                    area = 0.5 * abs(x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2))
+                    return area
 
-            axes.legend([f'Area: {triangle_area(points):0.4f}'],bbox_to_anchor=(0.9, 0.25), handlelength=0, fontsize = 20, framealpha = 1)
-            plt.show()
-            self.save_to_file()
-        else:
-            print("table cell error")
+                axes.legend([f'Area: {triangle_area(points):0.4f}'],bbox_to_anchor=(0.9, 0.25), handlelength=0, fontsize = 20, framealpha = 1)
+                plt.show()
+                self.save_to_file(sample_name)
+            else:
+                print("table cell error")
 
-    def save_to_file(self):
+    def save_to_file(self, sample_name):
         self.save_to_file_path = self.ui.le_file_directory.text()
         if (self.save_to_file_path != ""):
             try:
-                plt.savefig(f"{self.save_to_file_path}\\{self.sample_name}_chroma.png")
+                plt.savefig(f"{self.save_to_file_path}\\{sample_name}_chroma.png")
             except:
-                print(f"unable to save file to path: {self.save_to_file_path}\\{self.sample_name}_chroma.png")
+                print(f"unable to save file to path: {self.save_to_file_path}\\{sample_name}_chroma.png")
         else:
             print("Not saving image")
             # plt.savefig(f"{self.sample_RGB.RGB_COLOURSPACE_SAMPLE.name}_chroma.png")
