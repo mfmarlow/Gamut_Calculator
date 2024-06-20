@@ -2158,4 +2158,5 @@ Bugs_and_issues.txt
 __pycache__/area.cpython-310.pyc
 __pycache__/Gamut.cpython-310.pyc
 __pycache__/sample.cpython-310.pyc
-
+.vscode/
+__pycache__/
