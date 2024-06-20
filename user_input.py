@@ -36,7 +36,7 @@ def check_values_within_limits(self):
     table_y =0
     while table_y <= 1:
         table_x =0
-        while table_x <=5:
+        while table_x <=2:
             if (self.ui.tW_sample.item(table_x, table_y).text().strip() != "") and (float(self.ui.tW_sample.item(table_x, table_y).text()) < 0.9) and (float(self.ui.tW_sample.item(table_x, table_y).text()) > 0):
                     # print(f"pass ({table_x}, {table_y})")
                 pass
@@ -72,9 +72,9 @@ def get_colorspace_input(self):
                 np.array([float(self.ui.tW_sample.item(0, 0).text()), float(self.ui.tW_sample.item(0, 1).text())]),   #R
                 np.array([float(self.ui.tW_sample.item(1, 0).text()), float(self.ui.tW_sample.item(1, 1).text())]),   #G
                 np.array([float(self.ui.tW_sample.item(2, 0).text()), float(self.ui.tW_sample.item(2, 1).text())]),   #B
-                np.array([float(self.ui.tW_sample.item(3, 0).text()), float(self.ui.tW_sample.item(3, 1).text())]),   #Y
-                np.array([float(self.ui.tW_sample.item(4, 0).text()), float(self.ui.tW_sample.item(4, 1).text())]),   #C
-                np.array([float(self.ui.tW_sample.item(5, 0).text()), float(self.ui.tW_sample.item(5, 1).text())]),   #M
+                # np.array([float(self.ui.tW_sample.item(3, 0).text()), float(self.ui.tW_sample.item(3, 1).text())]),   #Y
+                # np.array([float(self.ui.tW_sample.item(4, 0).text()), float(self.ui.tW_sample.item(4, 1).text())]),   #C
+                # np.array([float(self.ui.tW_sample.item(5, 0).text()), float(self.ui.tW_sample.item(5, 1).text())]),   #M
             ]
         )
         
