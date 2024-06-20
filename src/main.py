@@ -41,10 +41,10 @@ class Gamut_win(QtWidgets.QMainWindow):
         msg.setTextFormat(Qt.RichText)
         # msg.about(self, "About", "Gamut Calculator\nVersion: 1.0\n\nNo rights reserved at all cCc\n<a href='http://google.com/'>Google</a>")
         icon = QIcon()
-        icon.addPixmap(QPixmap("icon.jpg"), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap("assets/icon.jpg"), QIcon.Normal, QIcon.Off)
         msg.setWindowIcon(icon)
         msg.setWindowTitle("About")
-        msg.setIconPixmap(QPixmap("icon.jpg"))
+        msg.setIconPixmap(QPixmap("assets/icon.jpg"))
         msg.setText('<p><span style="color:#0000a0"><span style="font-size:22px">Gamut Calculator</span></span><br><span style="font-size:15px">Version 1.0</span></p><p><span style="font-size:15px">Written in Python by using open source modules <br>by <br>Emre Beşkazak</span></p><p><span style="font-size:15px">Source code:</span><br><a href="https://github.com/emrebeskazak/Gamut_Calculator">GitHub</a></p>')
         x = msg.exec_()
 
@@ -100,7 +100,7 @@ class Gamut_win(QtWidgets.QMainWindow):
                 # Create the background image
                 figure = plt.figure(figsize=(10, 11))
                 background_axes = figure.add_axes([0.03, -0.025, 0.962, 0.962])
-                image = mpimg.imread("1080px-CIE_1976_UCS.png")
+                image = mpimg.imread("assets/1080px-CIE_1976_UCS.png")
                 background_axes.imshow(image)
                 background_axes.axis('off')
                 # colour.plotting.plot_chromaticity_diagram_CIE1976UCS(axes=axes, transparent_background=False)
