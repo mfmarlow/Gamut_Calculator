@@ -2,34 +2,19 @@ import sys
 
 from colour import RGB_COLOURSPACES
 import colour.utilities
-from matplotlib.patches import Polygon
 from Gamut import Ui_MainWindow
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QTableWidgetItem, QFileDialog
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtGui import QIcon
-# from PyQt5.Qt import Qt, QApplication, QClipboard
 
 import numpy as np
 import matplotlib.pyplot as plt
-from colour.plotting import plot_RGB_colourspaces_in_chromaticity_diagram_CIE1976UCS, plot_chromaticity_diagram_CIE1976UCS
-from colour import Luv_uv_to_xy
-from colour.utilities import Structure
-from matplotlib.axes import Axes
 import matplotlib.image as mpimg
-from matplotlib.lines import Line2D
 
 import colour
-import sample
-import area
 import user_input
-
-# # RGB Colourspaces keys list: #
-# import colour.models
-# from pprint import pprint
-# # pprint(sorted(colour.models.RGB_COLOURSPACES.keys()))
-# pprint(RGB_COLOURSPACES["NTSC \\(1953\\)"])
 
 
 class Gamut_win(QtWidgets.QMainWindow):
@@ -38,7 +23,6 @@ class Gamut_win(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        self.sample_RGB = sample.RGB_primaries()
         # Radio button initial settings
         self.ui.rB_table_s.setChecked(True)
         self.ui.groupBox_import_sample.setEnabled(False)
@@ -48,8 +32,7 @@ class Gamut_win(QtWidgets.QMainWindow):
         self.ui.rB_file_s.toggled.connect(self.f_file_s)
         self.ui.pb_browse_sample.clicked.connect(self.f_browse_sample)
 
-        self.ui.pb_file_directory_selector.clicked.connect(
-            self.select_file_directory)
+        self.ui.pb_file_directory_selector.clicked.connect(self.select_file_directory)
         self.ui.actionAbout.triggered.connect(self.about)
         self.table_cell_error = False
 
@@ -77,11 +60,13 @@ class Gamut_win(QtWidgets.QMainWindow):
 
     def f_table_s(self):
         if self.sender().isChecked():
+            self.ui.le_sample_name.setEnabled(True)
             self.ui.tW_sample.setEnabled(True)
             self.ui.groupBox_import_sample.setEnabled(False)
 
     def f_file_s(self):
         if self.sender().isChecked():
+            self.ui.le_sample_name.setEnabled(False)
             self.ui.tW_sample.setEnabled(False)
             self.ui.groupBox_import_sample.setEnabled(True)
 
@@ -92,41 +77,9 @@ class Gamut_win(QtWidgets.QMainWindow):
             table_row += 1
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Control:
-            self.cntrl = True
-        # Ctrl + V Paste code for tabel widget
-        elif event.key() == Qt.Key_V:
-            if self.cntrl:
-                if self.ui.tW_sample.hasFocus():
-                    text = QtWidgets.QApplication.clipboard().text()
-                    text = text.splitlines()
-                    if len(text) > 1:
-                        table_row = 0
-                        for line in text:
-                            l_tuple = line.strip().partition("\t")
-                            self.ui.tW_sample.setItem(
-                                table_row, 0, QTableWidgetItem(l_tuple[0].strip()))
-                            self.ui.tW_sample.setItem(
-                                table_row, 1, QTableWidgetItem(l_tuple[2].strip()))
-                            table_row += 1
-                    else:
-                        l_tuple = text[0].strip().partition("\t")
-                        self.ui.tW_sample.setItem(self.ui.tW_sample.currentRow(
-                        ), self.ui.tW_sample.currentColumn(), QTableWidgetItem(l_tuple[0].strip()))
-        # Ctrl + C Copy code for table widget
-        elif event.key() == Qt.Key_C:
-            if self.cntrl:
-                if self.ui.tW_sample.hasFocus():
-                    QtWidgets.QApplication.clipboard().setText(f"{self.ui.tW_sample.item(0, 0).text()}\t{self.ui.tW_sample.item(0, 1).text()}\n{self.ui.tW_sample.item(1, 0).text()}\t{self.ui.tW_sample.item(
-                        1, 1).text()}\n{self.ui.tW_sample.item(2, 0).text()}\t{self.ui.tW_sample.item(2, 1).text()}\n{self.ui.tW_sample.item(3, 0).text()}\t{self.ui.tW_sample.item(3, 1).text()}")
-        elif event.key() == Qt.Key_Delete:
+        if event.key() == Qt.Key_Delete:
             if self.ui.tW_sample.hasFocus():
-                self.ui.tW_sample.setItem(self.ui.tW_sample.currentRow(
-                ), self.ui.tW_sample.currentColumn(), QTableWidgetItem(""))
-
-    def keyReleaseEvent(self, event):
-        if event.key() == Qt.Key_Control:
-            self.cntrl = False
+                self.ui.tW_sample.setItem(self.ui.tW_sample.currentRow(), self.ui.tW_sample.currentColumn(), QTableWidgetItem(""))
 
     ##
     # THE METHOD FOR CALCULATIONS BASED ON THE COORDINATES ENTERED INTO TABLE
@@ -153,15 +106,12 @@ class Gamut_win(QtWidgets.QMainWindow):
                 # colour.plotting.plot_chromaticity_diagram_CIE1976UCS(axes=axes, transparent_background=False)
 
                 # Add axes for plotting the user input points
-                axes = figure.add_axes(
-                    [0.0062, -0.0028, 1.01, 0.92], frame_on=False)
+                axes = figure.add_axes([0.0062, -0.0028, 1.01, 0.92], frame_on=False)
                 axes.axis("off")
 
                 # Set title and subtitle
-                axes.set_title('Chromaticity Diagram', y=1.021,
-                            fontsize=42, fontweight='bold')
-                plt.text(0.5, 0.982, sample_name, ha='center',
-                        va='center', transform=axes.transAxes, fontsize=30)
+                axes.set_title('Chromaticity Diagram', y=1.021, fontsize=42, fontweight='bold')
+                plt.text(0.5, 0.982, sample_name, ha='center', va='center', transform=axes.transAxes, fontsize=30)
 
                 # Adjust subplot parameters to create more space around the plot
                 plt.subplots_adjust(left=0.07, right=0.9, top=0.9, bottom=0.07)
@@ -191,11 +141,9 @@ class Gamut_win(QtWidgets.QMainWindow):
                 # rgbs = np.clip(raw_rgbs, 0.0, 1.0) #TODO is clipping the right strategy?
 
                 points_plus_first = np.vstack([points, points[0]])
-                axes.plot(points_plus_first[..., 0], points_plus_first[...,
-                        1], color='black', linewidth=4, zorder=3)
+                axes.plot(points_plus_first[..., 0], points_plus_first[...,1], color='black', linewidth=4, zorder=3)
 
-                axes.scatter(points[..., 0], points[..., 1], c='black',
-                            edgecolor='black', s=250, linewidths=2.5, zorder=4)
+                axes.scatter(points[..., 0], points[..., 1], c='black',edgecolor='black', s=250, linewidths=2.5, zorder=4)
 
                 # def generate_color_dots(axes: Axes):
                 #     xs = []
@@ -223,10 +171,10 @@ class Gamut_win(QtWidgets.QMainWindow):
                     x3, y3 = vertices[2]
 
                     # Calculate the area using the determinant formula
-                    area = 0.5 * abs(x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2))
+                    area = 0.5 * abs(x1*(y2 - y3) + x2 *(y3 - y1) + x3*(y1 - y2))
                     return area
 
-                axes.legend([f'Area: {triangle_area(points):0.4f}'],bbox_to_anchor=(0.9, 0.25), handlelength=0, fontsize = 20, framealpha = 1)
+                axes.legend([f'Area: {triangle_area(points):0.4f}'], bbox_to_anchor=(0.9, 0.25), handlelength=0, fontsize=20, framealpha=1)
                 plt.show()
                 self.save_to_file(sample_name)
             else:
@@ -241,7 +189,6 @@ class Gamut_win(QtWidgets.QMainWindow):
                 print(f"unable to save file to path: {self.save_to_file_path}\\{sample_name}_chroma.png")
         else:
             print("Not saving image")
-            # plt.savefig(f"{self.sample_RGB.RGB_COLOURSPACE_SAMPLE.name}_chroma.png")
 
 
 app = QtWidgets.QApplication(sys.argv)
