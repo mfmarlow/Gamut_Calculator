@@ -220,7 +220,7 @@ class Gamut_win(QtWidgets.QMainWindow):
                 area = 0.5 * abs(x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2))
                 return area
 
-            axes.legend([f'Area: {triangle_area(points):0.4f}'],bbox_to_anchor=(0.9, 0.25), handlelength=0, fontsize = 20)
+            axes.legend([f'Area: {triangle_area(points):0.4f}'],bbox_to_anchor=(0.9, 0.25), handlelength=0, fontsize = 20, framealpha = 1)
             plt.show()
             self.save_to_file()
         else:
