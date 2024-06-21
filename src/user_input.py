@@ -19,27 +19,37 @@ def check_values_within_limits(self):
 
 def get_colorspace_input(self):
     if self.ui.rB_file_s.isChecked():
-        # Get sample name name from line edit form or set generic name if empty
         file_path = self.ui.le_browse_sample.text()
-        with open(file_path,"r", encoding='utf8', errors='replace') as file:
-            csv_rows = csv.reader(file)
-            data = list(csv_rows)
-            array = np.array(data)
-            samples_u_prime = array[11]
-            samples_v_prime = array[12]
-            SAMPLE = np.array(
+        try:
+            with open(file_path,"r", encoding='utf8', errors='replace') as file:
+                csv_rows = csv.reader(file)
+                data = list(csv_rows)
+                array = np.array(data)
+                samples_u_prime = array[11]
+                samples_v_prime = array[12]
+                SAMPLE = np.array(
+                    [
+                        np.array(
+                            [
+                                get_sample_name(self),
+                                samples_u_prime[1], samples_v_prime[1],
+                                samples_u_prime[2], samples_v_prime[2],
+                                samples_u_prime[3], samples_v_prime[3]
+                            ]
+                        )
+                    ]
+                )
+                return SAMPLE
+        except:
+            return np.array(
                 [
                     np.array(
                         [
-                            get_sample_name(self),
-                            samples_u_prime[1], samples_v_prime[1],
-                            samples_u_prime[2], samples_v_prime[2],
-                            samples_u_prime[3], samples_v_prime[3]
+                            get_sample_name(self)
                         ]
                     )
                 ]
             )
-            return SAMPLE
 
     elif self.ui.rB_table_s.isChecked():
         # Check table values if empty and between 0 and 0.9
