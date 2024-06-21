@@ -1,13 +1,6 @@
 import numpy as np
 import csv
-
-
-def get_sample_name(self):
-    if self.ui.le_sample_name.text().strip() != "":
-        WHITEPOINT_NAME_SAMPLE = self.ui.le_sample_name.text()
-    else:
-        WHITEPOINT_NAME_SAMPLE = "Sample"
-    return WHITEPOINT_NAME_SAMPLE
+from numpy._typing import NDArray
 
 
 def check_values_within_limits(self):
@@ -28,26 +21,36 @@ def get_colorspace_input(self):
     if self.ui.rB_file_s.isChecked():
         # Get sample name name from line edit form or set generic name if empty
         file_path = self.ui.le_browse_sample.text()
-        with open(file_path, "r") as file:
+        with open(file_path,"r", encoding='utf8', errors='replace') as file:
             csv_rows = csv.reader(file)
             data = list(csv_rows)
             array = np.array(data)
-            SAMPLES = np.delete(array, 0, 0)
-            return SAMPLES
+            samples_u_prime = array[11]
+            samples_v_prime = array[12]
+            SAMPLE = np.array(
+                [
+                    np.array(
+                        [
+                            get_sample_name(self),
+                            samples_u_prime[1], samples_v_prime[1],
+                            samples_u_prime[2], samples_v_prime[2],
+                            samples_u_prime[3], samples_v_prime[3]
+                        ]
+                    )
+                ]
+            )
+            return SAMPLE
 
     elif self.ui.rB_table_s.isChecked():
         # Check table values if empty and between 0 and 0.9
         check_values_within_limits(self)
-
-        # Get sample name name from line edit form or set generic name if empty
-        SAMPLE_NAME = get_sample_name(self)
 
         # Get primary RGB uv coordinates from table widget cells
         SAMPLE = np.array(
             [
                 np.array(
                     [
-                        SAMPLE_NAME,
+                        get_sample_name(self),
                         self.ui.tW_sample.item(0, 0).text(), self.ui.tW_sample.item(0, 1).text(),   #R
                         self.ui.tW_sample.item(1, 0).text(), self.ui.tW_sample.item(1, 1).text(),   #G
                         self.ui.tW_sample.item(2, 0).text(), self.ui.tW_sample.item(2, 1).text(),   #B
@@ -57,3 +60,10 @@ def get_colorspace_input(self):
         )
 
         return SAMPLE
+
+def get_sample_name(self):
+    if self.ui.le_sample_name.text().strip() != "":
+        WHITEPOINT_NAME_SAMPLE = self.ui.le_sample_name.text()
+    else:
+        WHITEPOINT_NAME_SAMPLE = "Placeholder"
+    return WHITEPOINT_NAME_SAMPLE
