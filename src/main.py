@@ -24,6 +24,7 @@ class Gamut_win(QtWidgets.QMainWindow):
         super(Gamut_win, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        # Set the global font to Rubik
         font_dir = ['assets/Rubik/static']
         font_files = font_manager.findSystemFonts(fontpaths=font_dir)
         for font_file in font_files:
@@ -109,7 +110,7 @@ class Gamut_win(QtWidgets.QMainWindow):
                 self.draw_triangle(axes, points_plus_first)
                 self.draw_points(points, axes)
                 self.draw_legend(points, axes)
-                # self.draw_color_dots(axes= axes)
+                # self.draw_color_dots(axes)
                 plt.show()
                 self.save_to_file(sample_name)
             else:
@@ -191,12 +192,12 @@ class Gamut_win(QtWidgets.QMainWindow):
         axes.plot(points_plus_first[..., 0], points_plus_first[...,1], color='black', linewidth=4, zorder=3)
 
     def draw_points(self, points, axes):
-        axes.scatter(points[..., 0], points[..., 1], c='black',edgecolor='black', s=250, linewidths=2.5, zorder=4)
+        axes.scatter(points[..., 0], points[..., 1], c=['red', 'green', 'blue'],edgecolor='black', s=250, linewidths=2.5, zorder=4)
 
     def draw_legend(self, points, axes):
         axes.legend([f'Area: {self.triangle_area(points):0.4f}'], bbox_to_anchor=(0.9, 0.25), handlelength=0, fontsize=20, framealpha=1)
 
-    def draw_color_dots(axes):
+    def draw_color_dots(self, axes):
         xs = []
         ys = []
         num_points = 40
