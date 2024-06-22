@@ -16,13 +16,19 @@ import matplotlib.image as mpimg
 import colour
 import user_input
 
+from matplotlib import font_manager
+
 
 class Gamut_win(QtWidgets.QMainWindow):
     def __init__(self):
         super(Gamut_win, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
+        font_dir = ['assets/Rubik/static']
+        font_files = font_manager.findSystemFonts(fontpaths=font_dir)
+        for font_file in font_files:
+            font_manager.fontManager.addfont(font_file)
+        plt.rcParams['font.family'] = 'Rubik'
         # Radio button initial settings
         self.ui.rB_table_s.setChecked(True)
         self.ui.groupBox_import_sample.setEnabled(False)
