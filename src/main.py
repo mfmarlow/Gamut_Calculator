@@ -1,4 +1,5 @@
 import sys
+import os
 
 from colour import RGB_COLOURSPACES
 import colour.utilities
@@ -25,7 +26,8 @@ class Gamut_win(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         # Set the global font to Rubik
-        font_dir = ['assets/Rubik/static']
+        self.rootdir = os.path.dirname(__file__)
+        font_dir = [os.path.join(self.rootdir, 'assets/Rubik/static')]
         font_files = font_manager.findSystemFonts(fontpaths=font_dir)
         for font_file in font_files:
             font_manager.fontManager.addfont(font_file)
@@ -48,10 +50,10 @@ class Gamut_win(QtWidgets.QMainWindow):
         msg.setTextFormat(Qt.RichText)
         # msg.about(self, "About", "Gamut Calculator\nVersion: 1.0\n\nNo rights reserved at all cCc\n<a href='http://google.com/'>Google</a>")
         icon = QIcon()
-        icon.addPixmap(QPixmap("assets/icon.jpg"), QIcon.Normal, QIcon.Off)
+        icon.addPixmap(QPixmap(os.path.join(self.rootdir, 'assets/icon.jpg')), QIcon.Normal, QIcon.Off)
         msg.setWindowIcon(icon)
         msg.setWindowTitle("About")
-        msg.setIconPixmap(QPixmap("assets/icon.jpg"))
+        msg.setIconPixmap(QPixmap(os.path.join(self.rootdir, 'assets/icon.jpg')))
         msg.setText('<p><span style="color:#0000a0"><span style="font-size:22px">Gamut Calculator</span></span><br><span style="font-size:15px">Version 1.0</span></p><p><span style="font-size:15px">Written in Python by using open source modules <br>by <br>Emre Beşkazak</span></p><p><span style="font-size:15px">Source code:</span><br><a href="https://github.com/emrebeskazak/Gamut_Calculator">GitHub</a></p>')
         x = msg.exec_()
 
@@ -151,7 +153,7 @@ class Gamut_win(QtWidgets.QMainWindow):
         # Create the background image
         figure = plt.figure(figsize=(10, 11))
         background_axes = figure.add_axes([0.03, -0.025, 0.962, 0.962])
-        image = mpimg.imread("assets/1080px-CIE_1976_UCS.png")
+        image = mpimg.imread(os.path.join(self.rootdir, 'assets/1080px-CIE_1976_UCS.png'))
         background_axes.imshow(image)
         background_axes.axis('off')
         # colour.plotting.plot_chromaticity_diagram_CIE1976UCS(axes=axes, transparent_background=False)
@@ -192,7 +194,11 @@ class Gamut_win(QtWidgets.QMainWindow):
         axes.plot(points_plus_first[..., 0], points_plus_first[...,1], color='black', linewidth=4, zorder=3)
 
     def draw_points(self, points, axes):
-        axes.scatter(points[..., 0], points[..., 1], c=['red', 'green', 'blue'],edgecolor='black', s=250, linewidths=2.5, zorder=4)
+        red = np.array([1,0,0])
+        green = np.array([0,1,0])
+        blue = np.array([0,0,1])
+        colors = np.array([red, green, blue])
+        axes.scatter(points[..., 0], points[..., 1], c=colors, edgecolor='black', s=250, linewidths=3.0, zorder=4)
 
     def draw_legend(self, points, axes):
         axes.legend([f'Area: {self.triangle_area(points):0.4f}'], bbox_to_anchor=(0.9, 0.25), handlelength=0, fontsize=20, framealpha=1)
@@ -218,9 +224,11 @@ class Gamut_win(QtWidgets.QMainWindow):
         self.save_to_file_path = self.ui.le_file_directory.text()
         if (self.save_to_file_path != ""):
             try:
-                plt.savefig(f"{self.save_to_file_path}\\{sample_name}_chroma.png")
+                filename = sample_name + "_chroma.png"
+                finalpath = os.path.join(self.save_to_file_path, filename)
+                plt.savefig(finalpath)
             except:
-                print(f"unable to save file to path: {self.save_to_file_path}\\{sample_name}_chroma.png")
+                print(f"unable to save file to path: {finalpath}")
         else:
             print("Not saving image")
 
